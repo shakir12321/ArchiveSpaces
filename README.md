@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ArchivesSpace Azure Deployment
 
 This repository contains Terraform configuration to deploy ArchivesSpace v4.1.1 on Azure using the official Docker configuration package.
@@ -66,7 +65,7 @@ Internet
     ↓
 Azure Load Balancer (port 80)
     ↓
-Ubuntu VM (Standard_B2s)
+Ubuntu VM (Standard_D4s_v3)
     ↓
 Docker Compose
     ├── ArchivesSpace App (port 8080)
@@ -80,9 +79,10 @@ Docker Compose
 
 ### VM Specifications
 
-- **Size**: Standard_B2s (2 vCPUs, 4 GB RAM)
+- **Size**: Standard_D4s_v3 (4 vCPUs, 16 GB RAM)
 - **OS**: Ubuntu 20.04 LTS
 - **Location**: East US
+- **Storage**: Premium SSD for optimal performance
 
 ### Network Security
 
@@ -112,12 +112,21 @@ Docker Compose
    - Import data as needed
 
 3. **Monitor the deployment:**
+
    ```bash
    ssh azureuser@<PUBLIC_IP>
    cd ~/archivesspace/archivesspace
    docker compose ps
    docker compose logs
    ```
+
+4. **Load demo data (optional):**
+   ```bash
+   ssh azureuser@<PUBLIC_IP>
+   cd ~/archivesspace/archivesspace
+   ./load-demo-data.sh
+   ```
+   This will load sample repositories, accessions, resources, agents, and subjects for testing.
 
 ## Troubleshooting
 
@@ -189,8 +198,10 @@ Feel free to submit issues and enhancement requests!
 
 ## License
 
-This project is licensed under the MIT License.
-=======
+# This project is licensed under the MIT License.
+
 # ArchiveSpaces
-Archive mgmt 
->>>>>>> f5dade704b34907e3ad514ab80200ee8ff01e821
+
+Archive mgmt
+
+> > > > > > > f5dade704b34907e3ad514ab80200ee8ff01e821
