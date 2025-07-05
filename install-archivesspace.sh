@@ -83,7 +83,7 @@ chown azureuser:azureuser .env
 # Start ArchivesSpace using the official configuration
 echo "Starting ArchivesSpace with official Docker configuration..."
 echo "This may take 5-10 minutes for the first startup..."
-cd /home/azureuser/archivesspace
+cd /home/azureuser/archivesspace/archivesspace
 sudo -u azureuser docker compose up --detach
 
 # Create a status monitoring script
@@ -93,11 +93,11 @@ echo "=== ArchivesSpace Status Check ==="
 echo ""
 
 echo "1. Docker containers status:"
-docker compose -f /home/azureuser/archivesspace/docker-compose.yml ps
+docker compose -f /home/azureuser/archivesspace/archivesspace/docker-compose.yml ps
 echo ""
 
 echo "2. Container logs (last 20 lines):"
-docker compose -f /home/azureuser/archivesspace/docker-compose.yml logs --tail=20
+docker compose -f /home/azureuser/archivesspace/archivesspace/docker-compose.yml logs --tail=20
 echo ""
 
 echo "3. Port listening status:"
@@ -135,7 +135,7 @@ chown azureuser:azureuser /home/azureuser/check-status.sh
 # Create a startup script
 cat <<EOF > /home/azureuser/start-archivesspace.sh
 #!/bin/bash
-cd /home/azureuser/archivesspace
+cd /home/azureuser/archivesspace/archivesspace
 echo "Starting ArchivesSpace..."
 docker compose up --detach
 echo "ArchivesSpace is starting up (this may take 5-10 minutes)..."
