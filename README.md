@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ArchivesSpace Azure Deployment
 
 This repository contains Terraform configuration to deploy ArchivesSpace v4.1.1 on Azure using the official Docker configuration package.
@@ -189,3 +190,7 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 This project is licensed under the MIT License.
+=======
+# ArchiveSpaces
+Archive mgmt 
+>>>>>>> f5dade704b34907e3ad514ab80200ee8ff01e821
