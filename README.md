@@ -1,6 +1,6 @@
 # ArchivesSpace Azure Deployment
 
-This repository contains Terraform configuration to deploy ArchivesSpace v4.1.1 on Azure using the official Docker configuration package.
+This repository contains Terraform configuration to deploy ArchivesSpace v4.1.1 on Azure using the official Docker configuration package with **fully inlined installation scripts**.
 
 ## Overview
 
@@ -10,7 +10,17 @@ This setup deploys ArchivesSpace following the [official ArchivesSpace Docker do
 - **MySQL 8** - Database backend
 - **Solr 4.1.1** - Search engine
 - **Nginx** - Reverse proxy
+- **Fedora 6.4.0** - Digital repository
+- **ActiveMQ 5.15.9** - Message broker
 - **Automated backups** - Database backup service
+
+## 🚀 Key Features
+
+✅ **Self-Contained**: All installation scripts are inlined in Terraform using `locals`  
+✅ **Zero External Dependencies**: No separate .sh files to manage  
+✅ **Fully Automated**: Complete deployment in one Terraform apply  
+✅ **Production Ready**: Includes monitoring, status checks, and management scripts  
+✅ **Digital Objects**: Fedora integration for digital asset management
 
 ## Prerequisites
 
@@ -56,7 +66,9 @@ This setup deploys ArchivesSpace following the [official ArchivesSpace Docker do
 5. **Access ArchivesSpace:**
    - Staff Interface: `http://<PUBLIC_IP>/staff/`
    - Public Interface: `http://<PUBLIC_IP>/`
-   - Solr Admin: `http://<PUBLIC_IP>:8983/solr/`
+   - API: `http://<PUBLIC_IP>/api/`
+   - Fedora: `http://<PUBLIC_IP>:8086/fcrepo/rest`
+   - ActiveMQ Admin: `http://<PUBLIC_IP>:8161/admin`
 
 ## Architecture
 
@@ -65,21 +77,25 @@ Internet
     ↓
 Azure Load Balancer (port 80)
     ↓
-Ubuntu VM (Standard_D4s_v3)
+Ubuntu VM (Standard_D8s_v3)
     ↓
-Docker Compose
-    ├── ArchivesSpace App (port 8080)
-    ├── MySQL Database (port 3306)
-    ├── Solr Search (port 8983)
-    ├── Nginx Proxy (port 80)
-    └── Backup Service
+Docker Compose Stacks
+    ├── ArchivesSpace Stack
+    │   ├── ArchivesSpace App (port 8080)
+    │   ├── MySQL Database (port 3306)
+    │   ├── Solr Search (port 8983)
+    │   ├── Nginx Proxy (port 80)
+    │   └── Backup Service
+    └── Fedora Stack
+        ├── Fedora Repository (port 8086)
+        └── ActiveMQ Broker (ports 61616, 8161)
 ```
 
 ## Configuration Details
 
 ### VM Specifications
 
-- **Size**: Standard_D4s_v3 (4 vCPUs, 16 GB RAM)
+- **Size**: Standard_D8s_v3 (8 vCPUs, 32 GB RAM)
 - **OS**: Ubuntu 20.04 LTS
 - **Location**: East US
 - **Storage**: Premium SSD for optimal performance
@@ -88,14 +104,30 @@ Docker Compose
 
 - **SSH**: Port 22 (for management)
 - **HTTP**: Port 80 (ArchivesSpace web interface)
-- **Additional ports**: 8080, 8081, 8089, 8983, 3306 (for services)
+- **ArchivesSpace**: Ports 8080, 8081, 8089, 8983, 3306
+- **Fedora**: Ports 8086, 61616, 8161
 
-### ArchivesSpace Configuration
+### Installation Sequence
 
-- Uses official Docker configuration package from GitHub releases
-- Automatic database initialization and migrations
-- Secure default passwords (should be changed after deployment)
-- Nginx reverse proxy for web access
+The deployment uses **Azure VM Extensions** with inlined scripts:
+
+1. **ArchivesSpace Core** (`install_archivesspace` local)
+
+   - Installs Docker Engine and Docker Compose
+   - Downloads official ArchivesSpace v4.1.1 Docker package
+   - Configures environment variables and starts containers
+   - Creates monitoring and management scripts
+
+2. **Fedora Repository** (`install_fedora` local)
+
+   - Deploys Fedora 6.4.0 digital repository
+   - Deploys ActiveMQ 5.15.9 message broker
+   - Sets up networking and volumes
+
+3. **Integration** (`install_fedora_integration` local)
+   - Configures ArchivesSpace to work with Fedora
+   - Enables digital object management
+   - Restarts services to apply configuration
 
 ## Post-Deployment Steps
 
@@ -105,28 +137,59 @@ Docker Compose
    - Default credentials: `admin` / `admin`
    - Change passwords immediately
 
-2. **Configure ArchivesSpace:**
+2. **Load demo data (optional):**
 
-   - Set up repositories
-   - Configure user accounts
-   - Import data as needed
+   ```bash
+   # Extract the demo data script
+   ./extract-scripts.sh
+   scp load-demo-data.sh azureuser@<PUBLIC_IP>:~/
+   ssh azureuser@<PUBLIC_IP>
+   cd ~/archivesspace/archivesspace
+   ../load-demo-data.sh
+   ```
 
-3. **Monitor the deployment:**
+3. **Setup digital objects (optional):**
+
+   ```bash
+   # Extract the digital objects script
+   ./extract-scripts.sh
+   scp setup-digital-objects.sh azureuser@<PUBLIC_IP>:~/
+   ssh azureuser@<PUBLIC_IP>
+   cd ~/archivesspace/archivesspace
+   ../setup-digital-objects.sh
+   ```
+
+4. **Monitor the deployment:**
 
    ```bash
    ssh azureuser@<PUBLIC_IP>
    cd ~/archivesspace/archivesspace
    docker compose ps
    docker compose logs
+   ./check-status.sh
    ```
 
-4. **Load demo data (optional):**
-   ```bash
-   ssh azureuser@<PUBLIC_IP>
-   cd ~/archivesspace/archivesspace
-   ./load-demo-data.sh
-   ```
-   This will load sample repositories, accessions, resources, agents, and subjects for testing.
+## Project Structure
+
+```
+terraform-mainifest/
+├── main.tf                    # Main Terraform configuration with inlined scripts
+├── README.md                  # This documentation
+├── extract-scripts.sh         # Helper script to extract optional scripts
+├── .gitignore                 # Git ignore rules
+├── .terraform.lock.hcl        # Terraform dependency lock file
+└── terraform.tfstate*         # Terraform state files
+```
+
+### Inlined Scripts in `main.tf`
+
+All installation scripts are now inlined using Terraform `locals`:
+
+- `local.install_archivesspace` - Core ArchivesSpace installation
+- `local.install_fedora` - Fedora digital repository setup
+- `local.install_fedora_integration` - Integration between ArchivesSpace and Fedora
+- `local.load_demo_data` - Demo data loading (available as output)
+- `local.setup_digital_objects` - Digital objects configuration (available as output)
 
 ## Troubleshooting
 
@@ -169,7 +232,20 @@ docker compose exec app bash
 
 # Backup database
 docker compose exec db mysqldump -u root -p archivesspace > backup.sql
+
+# Check Fedora status
+cd ~/fedora
+docker compose ps
 ```
+
+## Benefits of Inlined Scripts
+
+✅ **Single File**: All configuration in one `main.tf` file  
+✅ **Version Control**: Scripts are versioned with Terraform code  
+✅ **No File Dependencies**: No external .sh files to manage  
+✅ **Easier Deployment**: One command deploys everything  
+✅ **Better Portability**: Self-contained configuration  
+✅ **Consistent Execution**: Scripts are always in sync with infrastructure
 
 ## Cleanup
 
@@ -198,7 +274,7 @@ Feel free to submit issues and enhancement requests!
 
 ## License
 
-# This project is licensed under the MIT License.
+This project is open source and available under the MIT License.
 
 # ArchiveSpaces
 
