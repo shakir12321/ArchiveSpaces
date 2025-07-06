@@ -175,6 +175,7 @@ The deployment uses **Azure VM Extensions** with inlined scripts:
 terraform-mainifest/
 ├── main.tf                    # Main Terraform configuration with inlined scripts
 ├── README.md                  # This documentation
+├── DEVELOPMENT_GUIDELINES.md  # Development practices and commit standards
 ├── extract-scripts.sh         # Helper script to extract optional scripts
 ├── .gitignore                 # Git ignore rules
 ├── .terraform.lock.hcl        # Terraform dependency lock file
@@ -269,6 +270,8 @@ terraform destroy -auto-approve
   - Implement proper monitoring and logging
 
 ## Contributing
+
+Please read [DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md) before contributing to understand our development practices and commit standards.
 
 Feel free to submit issues and enhancement requests!
 
