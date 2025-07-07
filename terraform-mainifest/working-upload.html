@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Working File Upload for ArchivesSpace</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .upload-form {
+        border: 2px dashed #007cba;
+        padding: 30px;
+        margin: 20px 0;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .file-list {
+        margin-top: 30px;
+      }
+      .file-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        background: #f9f9f9;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .file-url {
+        font-family: monospace;
+        background: #e9ecef;
+        padding: 8px;
+        border-radius: 4px;
+        display: block;
+        margin: 5px 0;
+        word-break: break-all;
+      }
+      .btn {
+        background: #007cba;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: #005a87;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      h3 {
+        color: #007cba;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📁 Working File Upload for ArchivesSpace</h1>
+
+      <div class="upload-form">
+        <h3>Upload Your Files</h3>
+        <p>Select files to upload. Files will be saved to the server.</p>
+        <form id="uploadForm" enctype="multipart/form-data">
+          <input
+            type="file"
+            name="files[]"
+            multiple
+            accept="image/*,.pdf,.doc,.docx,.mp3,.mp4,.wav"
+            style="margin: 20px 0"
+          />
+          <br />
+          <button type="submit" class="btn">Upload Files</button>
+        </form>
+        <div id="uploadStatus"></div>
+      </div>
+
+      <div class="file-list">
+        <h3>📋 Available Files</h3>
+        <p>
+          <strong
+            >Copy these URLs and paste them in ArchivesSpace File URI
+            field:</strong
+          >
+        </p>
+        <div id="fileList">
+          <p>No files uploaded yet. Upload some files above!</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Function to list existing files
+      function listFiles() {
+        fetch("/uploads/list-files.php")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.files && data.files.length > 0) {
+              let fileList = "";
+              data.files.forEach((file) => {
+                fileList += `
+                                <div class="file-item">
+                                    <strong>${file.name}</strong><br>
+                                    <span class="file-url">${file.url}</span>
+                                    <br><small>Size: ${file.size} bytes</small>
+                                </div>
+                            `;
+              });
+              document.getElementById("fileList").innerHTML = fileList;
+            } else {
+              document.getElementById("fileList").innerHTML =
+                "<p>No files uploaded yet. Upload some files above!</p>";
+            }
+          })
+          .catch((error) => {
+            console.error("Error listing files:", error);
+            document.getElementById("fileList").innerHTML =
+              '<p class="error">Error loading files. Please refresh the page.</p>';
+          });
+      }
+
+      // Handle file upload
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(this);
+          const statusDiv = document.getElementById("uploadStatus");
+
+          statusDiv.innerHTML = "<p>Uploading files...</p>";
+
+          fetch("/uploads/upload.php", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                statusDiv.innerHTML =
+                  '<p class="success">Files uploaded successfully!</p>';
+                listFiles(); // Refresh the file list
+              } else {
+                statusDiv.innerHTML =
+                  '<p class="error">Upload failed: ' +
+                  (data.error || "Unknown error") +
+                  "</p>";
+              }
+            })
+            .catch((error) => {
+              console.error("Upload error:", error);
+              statusDiv.innerHTML =
+                '<p class="error">Upload failed. Please try again.</p>';
+            });
+        });
+
+      // Load files on page load
+      listFiles();
+    </script>
+  </body>
+</html>

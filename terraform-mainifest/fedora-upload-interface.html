@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Fedora Commons Upload Interface</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .upload-form {
+        border: 2px dashed #007cba;
+        padding: 30px;
+        margin: 20px 0;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .fedora-info {
+        background: #e7f3ff;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 20px 0;
+      }
+      .file-list {
+        margin-top: 30px;
+      }
+      .file-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        background: #f9f9f9;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .fedora-uri {
+        font-family: monospace;
+        background: #e9ecef;
+        padding: 8px;
+        border-radius: 4px;
+        display: block;
+        margin: 5px 0;
+        word-break: break-all;
+        color: #007cba;
+      }
+      .btn {
+        background: #007cba;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: #005a87;
+      }
+      .btn-secondary {
+        background: #6c757d;
+      }
+      .btn-secondary:hover {
+        background: #545b62;
+      }
+      .btn-success {
+        background: #28a745;
+      }
+      .btn-success:hover {
+        background: #218838;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      h3 {
+        color: #007cba;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+      .step {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      .file-input {
+        margin: 20px 0;
+      }
+      .progress {
+        width: 100%;
+        height: 20px;
+        background: #f0f0f0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+      .progress-bar {
+        height: 100%;
+        background: #007cba;
+        width: 0%;
+        transition: width 0.3s;
+      }
+      .result {
+        margin: 20px 0;
+        padding: 15px;
+        border-radius: 4px;
+      }
+      .result.success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+      }
+      .result.error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🏛️ Fedora Commons Upload Interface</h1>
+
+      <div class="fedora-info">
+        <h3>📋 About Fedora Commons</h3>
+        <p>
+          <strong>Fedora Commons</strong> is a digital repository that provides:
+        </p>
+        <ul>
+          <li>✅ Digital preservation with checksums and versioning</li>
+          <li>✅ Rich metadata management</li>
+          <li>✅ Access control and permissions</li>
+          <li>✅ Standards-compliant digital storage</li>
+          <li>✅ Integration with ArchivesSpace</li>
+        </ul>
+      </div>
+
+      <div class="upload-form">
+        <h3>📤 Upload Files to Fedora Commons</h3>
+        <p>
+          Select a file to upload directly to Fedora for digital preservation:
+        </p>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+          <div class="file-input">
+            <input
+              type="file"
+              id="fileInput"
+              name="file"
+              accept="image/*,.pdf,.txt,.xml,.json,.html,.htm"
+              required
+            />
+          </div>
+
+          <div class="progress hidden" id="progress">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+
+          <button type="submit" class="btn" id="uploadBtn">
+            📤 Upload to Fedora
+          </button>
+        </form>
+
+        <div id="result" class="result hidden"></div>
+      </div>
+
+      <div class="step">
+        <h4>🎯 How to Use the Fedora URI in ArchivesSpace</h4>
+        <p>After uploading, copy the Fedora URI and use it in ArchivesSpace:</p>
+        <ol>
+          <li>Go to ArchivesSpace → Digital Objects → Create Digital Object</li>
+          <li>In the File Version section, paste the Fedora URI</li>
+          <li>Set File Format Name to the appropriate format</li>
+          <li>Save the Digital Object</li>
+        </ol>
+      </div>
+
+      <div class="file-list">
+        <h3>📋 Recent Uploads</h3>
+        <div id="uploadHistory">
+          <p>No uploads yet. Upload a file to see it here.</p>
+        </div>
+        <button class="btn btn-secondary" onclick="listFedoraObjects()">
+          Refresh Fedora Objects
+        </button>
+      </div>
+
+      <div class="fedora-info">
+        <h3>🔗 Fedora Commons Access</h3>
+        <p>
+          <strong>Fedora REST API:</strong>
+          <a href="http://172.173.163.116:8086/fcrepo/rest" target="_blank"
+            >http://172.173.163.116:8086/fcrepo/rest</a
+          >
+        </p>
+        <p>
+          <strong>ActiveMQ Admin:</strong>
+          <a href="http://172.173.163.116:8161/admin" target="_blank"
+            >http://172.173.163.116:8161/admin</a
+          >
+          (admin/admin)
+        </p>
+      </div>
+    </div>
+
+    <script>
+      const uploadForm = document.getElementById("uploadForm");
+      const fileInput = document.getElementById("fileInput");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const progress = document.getElementById("progress");
+      const progressBar = document.getElementById("progressBar");
+      const result = document.getElementById("result");
+      const uploadHistory = document.getElementById("uploadHistory");
+
+      uploadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const file = fileInput.files[0];
+        if (!file) {
+          showResult("Please select a file to upload.", "error");
+          return;
+        }
+
+        // Show progress
+        progress.classList.remove("hidden");
+        result.classList.add("hidden");
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = "📤 Uploading...";
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch("upload.php", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showResult(
+              `
+              <h4>✅ Upload Successful!</h4>
+              <p><strong>File:</strong> ${data.file_name}</p>
+              <p><strong>Fedora URI:</strong></p>
+              <div class="fedora-uri" onclick="copyToClipboard('${data.fedora_uri}')" style="cursor: pointer;">
+                ${data.fedora_uri}
+              </div>
+              <p><small>Click the URI above to copy it to clipboard</small></p>
+            `,
+              "success"
+            );
+
+            // Add to upload history
+            addToHistory(data.file_name, data.fedora_uri);
+          } else {
+            showResult(`❌ Upload failed: ${data.error}`, "error");
+          }
+        } catch (error) {
+          showResult(`❌ Upload error: ${error.message}`, "error");
+        } finally {
+          progress.classList.add("hidden");
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = "📤 Upload to Fedora";
+        }
+      });
+
+      function showResult(message, type) {
+        result.innerHTML = message;
+        result.className = `result ${type}`;
+        result.classList.remove("hidden");
+      }
+
+      function addToHistory(fileName, fedoraUri) {
+        const historyItem = document.createElement("div");
+        historyItem.className = "file-item";
+        historyItem.innerHTML = `
+          <strong>${fileName}</strong><br>
+          <div class="fedora-uri" onclick="copyToClipboard('${fedoraUri}')" style="cursor: pointer;">
+            ${fedoraUri}
+          </div>
+          <small>Click URI to copy</small>
+        `;
+
+        if (uploadHistory.querySelector("p")) {
+          uploadHistory.innerHTML = "";
+        }
+        uploadHistory.insertBefore(historyItem, uploadHistory.firstChild);
+      }
+
+      function copyToClipboard(text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            alert("Fedora URI copied to clipboard!");
+          })
+          .catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+            alert("Fedora URI copied to clipboard!");
+          });
+      }
+
+      function listFedoraObjects() {
+        // This would need a backend to actually query Fedora
+        // For now, we'll show instructions
+        const objectsDiv = document.getElementById("uploadHistory");
+        objectsDiv.innerHTML = `
+          <div class="file-item">
+            <strong>Fedora Objects</strong><br>
+            <p>To see objects in Fedora, use these commands:</p>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0;">
+              ssh azureuser@172.173.163.116<br>
+              curl -u fedoraAdmin:fedoraAdmin http://localhost:8086/fcrepo/rest
+            </div>
+            <p>Or visit: <a href="http://172.173.163.116:8086/fcrepo/rest" target="_blank">Fedora REST API</a></p>
+          </div>
+        `;
+      }
+    </script>
+  </body>
+</html>
